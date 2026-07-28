@@ -29,6 +29,7 @@ import com.resonance.music.ui.screens.artist.ArtistScreen
 import com.resonance.music.ui.screens.genre.GenreScreen
 import com.resonance.music.ui.screens.home.HomeScreen
 import com.resonance.music.ui.screens.library.LibraryScreen
+import com.resonance.music.ui.screens.lidarr.LidarrScreen
 import com.resonance.music.ui.screens.login.LoginScreen
 import com.resonance.music.ui.screens.lyrics.LyricsScreen
 import com.resonance.music.ui.screens.player.PlayerScreen
@@ -42,6 +43,7 @@ object Routes {
     const val HOME = "home"
     const val LIBRARY = "library"
     const val SEARCH = "search"
+    const val LIDARR = "lidarr"
     const val PLAYER = "player"
     const val LYRICS = "lyrics"
     const val SETTINGS = "settings"
@@ -147,6 +149,12 @@ fun ResonanceNavHost(
                                     onClick = { onTabSelected(Routes.LIBRARY) }
                                 )
                                 NavigationBarItem(
+                                    icon = { Icon(Icons.Default.CloudDownload, contentDescription = null) },
+                                    label = { Text("Lidarr") },
+                                    selected = currentRoute == Routes.LIDARR,
+                                    onClick = { onTabSelected(Routes.LIDARR) }
+                                )
+                                NavigationBarItem(
                                     icon = { Icon(Icons.Default.Settings, contentDescription = null) },
                                     label = { Text("Settings") },
                                     selected = currentRoute == Routes.SETTINGS,
@@ -198,6 +206,10 @@ fun ResonanceNavHost(
                     onArtistClick = { navController.navigate(Routes.artist(it)) },
                     onAlbumClick = { navController.navigate(Routes.album(it)) }
                 )
+            }
+
+            composable(Routes.LIDARR) {
+                LidarrScreen()
             }
 
             composable(

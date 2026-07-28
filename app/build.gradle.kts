@@ -20,6 +20,16 @@ android {
         versionName = "0.6.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Lidarr server config from local.properties (gitignored — key never committed)
+        val lidarrProps = Properties().apply {
+            rootProject.file("local.properties").takeIf { it.exists() }
+                ?.inputStream()?.use { load(it) }
+        }
+        buildConfigField("String", "LIDARR_URL",
+            "\"${lidarrProps.getProperty("lidarr.url", "http://192.168.4.206:8686/")}\"")
+        buildConfigField("String", "LIDARR_KEY",
+            "\"${lidarrProps.getProperty("lidarr.key", "")}\"")
     }
 
     // From-source builds (e.g. F-Droid) have no signing material; only wire up a
