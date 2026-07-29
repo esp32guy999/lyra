@@ -16,6 +16,17 @@ interface LidarrApi {
     @POST("api/v1/artist")
     suspend fun addArtist(@Body request: AddArtistRequest): LidarrArtist
 
+    // --- Config needed to add an artist ---
+
+    @GET("api/v1/rootfolder")
+    suspend fun getRootFolders(): List<LidarrRootFolder>
+
+    @GET("api/v1/qualityprofile")
+    suspend fun getQualityProfiles(): List<LidarrProfile>
+
+    @GET("api/v1/metadataprofile")
+    suspend fun getMetadataProfiles(): List<LidarrProfile>
+
     // --- Album ---
 
     @GET("api/v1/album")

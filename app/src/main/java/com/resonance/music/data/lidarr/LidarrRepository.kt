@@ -8,24 +8,39 @@ class LidarrRepository @Inject constructor(
     private val api: LidarrApi,
     private val config: LidarrConfig
 ) {
-    suspend fun lookupArtist(term: String): List<LidarrArtist> {
-        return api.lookupArtist(term)
-    }
+    suspend fun lookupArtist(term: String): List<LidarrArtist> =
+        api.lookupArtist(term)
 
-    suspend fun addArtist(request: AddArtistRequest): LidarrArtist {
+    /**
+     * Add an artist to Lidarr (monitored + search for missing albums). Resolves the
+     * root folder + quality/metadata profiles from the server (uses the first of each,
+     * matching the common single-library setup).
+     */
+    suspend fun addArtist(artist: LidarrArtist): LidarrArtist {
+        val rootFolder = api.getRootFolders().firstOrNull()?.path
+            ?: throw IllegalStateException("No root folder configured in Lidarr")
+        val qualityId = api.getQualityProfiles().firstOrNull()?.id
+            ?: throw IllegalStateException("No quality profile in Lidarr")
+        val metadataId = api.getMetadataProfiles().firstOrNull()?.id
+            ?: throw IllegalStateException("No metadata profile in Lidarr")
+        val request = AddArtistRequest(
+            artistName = artist.artistName.orEmpty(),
+            foreignArtistId = artist.foreignArtistId.orEmpty(),
+            qualityProfileId = qualityId,
+            metadataProfileId = metadataId,
+            rootFolderPath = rootFolder
+        )
         return api.addArtist(request)
     }
 
-    suspend fun getAlbums(artistId: Int): List<LidarrAlbum> {
-        return api.getAlbums(artistId)
-    }
+    suspend fun getAlbums(artistId: Int): List<LidarrAlbum> =
+        api.getAlbums(artistId)
 
     suspend fun monitorAlbums(ids: List<Int>) {
         api.monitorAlbums(ids)
     }
 
     suspend fun searchAlbums(ids: List<Int>) {
-        val command = SearchAlbumCommand(albumIds = ids)
-        api.searchAlbums(command)
+        api.searchAlbums(SearchAlbumCommand(albumIds = ids))
     }
 }

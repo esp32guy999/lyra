@@ -17,7 +17,9 @@ data class LidarrUiState(
     val results: List<LidarrArtist> = emptyList(),
     val loading: Boolean = false,
     val error: String? = null,
-    val configured: Boolean = true
+    val configured: Boolean = true,
+    val adding: Set<String> = emptySet(),   // foreignArtistIds being added
+    val added: Set<String> = emptySet()     // foreignArtistIds added this session
 )
 
 @HiltViewModel
@@ -51,6 +53,27 @@ class LidarrViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     loading = false,
                     error = e.message ?: "Search failed"
+                )
+            }
+        }
+    }
+
+    /** Add the artist to Lidarr (monitored + search). Tracks per-artist progress. */
+    fun addArtist(artist: LidarrArtist) {
+        val fid = artist.foreignArtistId ?: return
+        val s = _state.value
+        if (fid in s.adding || fid in s.added) return
+        _state.value = s.copy(adding = s.adding + fid, error = null)
+        viewModelScope.launch {
+            try {
+                repository.addArtist(artist)
+                val cur = _state.value
+                _state.value = cur.copy(adding = cur.adding - fid, added = cur.added + fid)
+            } catch (e: Exception) {
+                val cur = _state.value
+                _state.value = cur.copy(
+                    adding = cur.adding - fid,
+                    error = "Couldn't add ${artist.artistName}: ${e.message}"
                 )
             }
         }

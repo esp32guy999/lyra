@@ -67,17 +67,38 @@ fun LidarrScreen(
                 else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(state.results) { artist ->
                         ElevatedCard(Modifier.fillMaxWidth()) {
-                            Column(Modifier.padding(12.dp)) {
-                                Text(
-                                    artist.artistName ?: "Unknown",
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                artist.overview?.takeIf { it.isNotBlank() }?.let {
+                            Row(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(Modifier.weight(1f)) {
                                     Text(
-                                        it.take(160),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        modifier = Modifier.padding(top = 4.dp)
+                                        artist.artistName ?: "Unknown",
+                                        style = MaterialTheme.typography.titleMedium
                                     )
+                                    artist.overview?.takeIf { it.isNotBlank() }?.let {
+                                        Text(
+                                            it.take(160),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            modifier = Modifier.padding(top = 4.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(Modifier.width(8.dp))
+                                val fid = artist.foreignArtistId
+                                when {
+                                    fid != null && fid in state.added -> Text(
+                                        "Added ✓",
+                                        color = MaterialTheme.colorScheme.primary,
+                                        style = MaterialTheme.typography.labelLarge
+                                    )
+                                    fid != null && fid in state.adding ->
+                                        CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
+                                    else -> FilledTonalButton(onClick = { viewModel.addArtist(artist) }) {
+                                        Text("Add")
+                                    }
                                 }
                             }
                         }
