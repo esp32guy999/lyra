@@ -54,13 +54,12 @@ arr stack + qBittorrent do the heavy lifting. Lives in the **Manage** tab.
 - **P2 — ownership diff:** ✅ on opening an artist, query Navidrome (search3 → getArtist) for
   owned albums; each discography row shows OWNED (green) / MISSING (amber) via normalized-title
   match. (committed)
-- **P5 — library placement:** ◐ partial. Navidrome rescan (Subsonic `startScan`) wired —
-  "Rescan" button by the status line so imported music shows up in Lyra. Optional
-  `qbit.save.path` (local.properties, empty by default) directs torrent downloads at a
-  library-visible dir IF set. **Still needs (infra decision):** the actual placement path —
-  qBit can only write to dirs mounted in its container, so either (a) point `qbit.save.path`
-  at a Lidarr-watched/import folder that also lands in the music library, or (b) let Lidarr
-  do a manual-import from the completed torrent. Lidarr grabs already auto-import + tag.
+- **P5 — library placement:** ✅ torrent grabs API-add with `savepath=/data/music` — the
+  homelab music route (`/data/music` → `/mnt/user/media/music`, the library), matching the
+  qBit music watch folder. Routing is by **path, not category** (per
+  argus/docs/homelab/torrent-watch-folders.md — the `music` *category* is staging). Then the
+  "Rescan" button (Subsonic `startScan`) surfaces it in Lyra. Lidarr grabs auto-import + tag.
+  Nice-to-have not done: beets tagging (`docker exec beets …`) — the app can't ssh/exec on gg.
 
 ## Caveats (designed-around)
 - Lidarr search needs the album added first; Prowlarr raw doesn't → offer both paths.

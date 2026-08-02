@@ -38,12 +38,14 @@ interface QbitApi {
     suspend fun info(): List<QbitTorrent>
 
     // urls = newline/pipe separated. paused (4.x) + stopped (5.x) → add without starting.
+    // Route by SAVE PATH, not category (homelab policy: the "music" category is staging;
+    // /data/music is the library route). Category left empty on purpose.
     @FormUrlEncoded
     @POST("api/v2/torrents/add")
     suspend fun add(
         @Field("urls") urls: String,
-        @Field("category") category: String = "lyra",
         @Field("savepath") savepath: String = "",   // empty → qBit default
+        @Field("category") category: String = "",
         @Field("paused") paused: String = "true",
         @Field("stopped") stopped: String = "true"
     ): Response<Unit>
