@@ -108,9 +108,15 @@ private fun DiscogList(s: LidarrUiState, vm: LidarrViewModel) {
     if (s.albums.isEmpty()) { Hint("No releases."); return }
     LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         items(s.albums) { al ->
+            val owned = vm.isOwned(al)
             ElevatedCard(Modifier.fillMaxWidth().clickable { vm.openAlbum(al) }) {
-                Text(al.title ?: "Untitled", style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(12.dp))
+                Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(al.title ?: "Untitled", style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.weight(1f))
+                    Spacer(Modifier.width(8.dp))
+                    if (owned) Badge("OWNED", Color(0xFF2E7D32))
+                    else Badge("MISSING", Color(0xFF8D6E00))
+                }
             }
         }
     }

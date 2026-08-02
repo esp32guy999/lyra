@@ -12,6 +12,7 @@ import com.resonance.music.data.prowlarr.ProwlarrResult
 import com.resonance.music.data.qbit.PendingTorrent
 import com.resonance.music.data.qbit.QbitConfig
 import com.resonance.music.data.qbit.QbitRepository
+import com.resonance.music.data.repository.MusicRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,6 +40,7 @@ data class LidarrUiState(
     val artists: List<LidarrArtist> = emptyList(),
     val artist: LidarrArtist? = null,
     val albums: List<LidarrAlbum> = emptyList(),
+    val owned: Set<String> = emptySet(),   // normalized titles already in the library
     val album: LidarrAlbum? = null,
     val results: List<AcqResult> = emptyList(),
     val loading: Boolean = false,
@@ -55,6 +57,7 @@ class LidarrViewModel @Inject constructor(
     private val lidarr: LidarrRepository,
     private val prowlarr: ProwlarrRepository,
     private val qbit: QbitRepository,
+    private val music: MusicRepository,
     config: LidarrConfig,
     private val qbitConfig: QbitConfig
 ) : ViewModel() {
@@ -85,7 +88,8 @@ class LidarrViewModel @Inject constructor(
             try {
                 val artist = if (a.id != null) a else lidarr.addArtist(a)
                 val albums = lidarr.getAlbums(artist.id ?: error("no artist id"))
-                set { it.copy(loading = false, stage = Stage.DISCOG, artist = artist, albums = albums) }
+                val owned = music.ownedAlbumTitles(artist.artistName.orEmpty())
+                set { it.copy(loading = false, stage = Stage.DISCOG, artist = artist, albums = albums, owned = owned) }
             } catch (e: Exception) { set { it.copy(loading = false, error = "Couldn't load discography: ${e.message}") } }
         }
     }
@@ -167,10 +171,14 @@ class LidarrViewModel @Inject constructor(
     fun back() = set {
         when (it.stage) {
             Stage.RESULTS -> it.copy(stage = Stage.DISCOG, results = emptyList(), busy = null, error = null)
-            Stage.DISCOG -> it.copy(stage = Stage.SEARCH, albums = emptyList(), error = null)
+            Stage.DISCOG -> it.copy(stage = Stage.SEARCH, albums = emptyList(), owned = emptySet(), error = null)
             Stage.SEARCH -> it
         }
     }
+
+    /** True if this discography album is already in the Navidrome library. */
+    fun isOwned(album: LidarrAlbum): Boolean =
+        album.title?.let { music.normalizeTitle(it) in _state.value.owned } ?: false
 
     private fun inferQuality(title: String?): String {
         val t = (title ?: "").uppercase()

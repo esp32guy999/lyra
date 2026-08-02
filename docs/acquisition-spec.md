@@ -51,8 +51,9 @@ arr stack + qBittorrent do the heavy lifting. Lives in the **Manage** tab.
 - **P4 — track-select (torrents):** ✅ Prowlarr grab → qBit add-paused → locate hash →
   list files → track-select dialog → filePrio (0 skip / 1 want) → start. Only chosen
   tracks download. (committed)
-- **P2 — ownership diff:** ⬜ Navidrome owned-set → album/track OWNED vs MISSING badges in
-  the discography (dedup what you already have). Not yet built.
+- **P2 — ownership diff:** ✅ on opening an artist, query Navidrome (search3 → getArtist) for
+  owned albums; each discography row shows OWNED (green) / MISSING (amber) via normalized-title
+  match. (committed)
 - **P5 — library placement:** ⬜ Prowlarr/qBit downloads land in qBit's dir, not the music
   library. Need import: point qBit save-path at a Lidarr-watched folder (or manual move +
   tag) + Navidrome rescan. Lidarr grabs already auto-import. Not yet built.

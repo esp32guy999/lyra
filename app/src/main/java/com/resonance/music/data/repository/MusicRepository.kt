@@ -77,6 +77,25 @@ class MusicRepository @Inject constructor(
         return env.searchResult3 ?: SearchResult()
     }
 
+    /**
+     * Normalized album titles the user already owns for [artistName], for the acquisition
+     * ownership diff. Best-effort: matches the local artist by name, lists their albums.
+     * Returns an empty set if the artist isn't in the library (nothing owned).
+     */
+    suspend fun ownedAlbumTitles(artistName: String): Set<String> {
+        val want = normalizeTitle(artistName)
+        val hits = try { search(artistName).artist ?: emptyList() } catch (_: Exception) { return emptySet() }
+        val local = hits.firstOrNull { normalizeTitle(it.name) == want }
+            ?: hits.firstOrNull { normalizeTitle(it.name).contains(want) || want.contains(normalizeTitle(it.name)) }
+            ?: return emptySet()
+        val detail = try { getArtistDetail(local.id) } catch (_: Exception) { return emptySet() }
+        return detail?.album?.mapNotNull { it.name?.let(::normalizeTitle) }?.toSet() ?: emptySet()
+    }
+
+    /** Loose title key: lowercased, punctuation-stripped, collapsed spaces (for owned-vs-missing). */
+    fun normalizeTitle(s: String): String =
+        s.lowercase().replace(Regex("[^a-z0-9]+"), " ").trim()
+
     // --- Playlists ---
 
     suspend fun getPlaylists(): List<PlaylistItem> {
