@@ -41,3 +41,21 @@ data class AddArtistOptions(
     val monitor: String = "all",
     val searchForMissingAlbums: Boolean = true
 )
+
+// Interactive-search release (Lidarr already parses quality/seeders from the indexer).
+data class LidarrRelease(
+    val guid: String? = null,
+    val title: String? = null,
+    val size: Long? = null,
+    val seeders: Int? = null,
+    val indexer: String? = null,
+    val indexerId: Int? = null,
+    val protocol: String? = null,          // "torrent" | "usenet"
+    val quality: LidarrQualityWrap? = null
+) {
+    val qualityLabel: String get() = quality?.quality?.name ?: "Unknown"
+}
+data class LidarrQualityWrap(val quality: LidarrQualityName? = null)
+data class LidarrQualityName(val name: String? = null)
+
+data class GrabReleaseRequest(val guid: String, val indexerId: Int)

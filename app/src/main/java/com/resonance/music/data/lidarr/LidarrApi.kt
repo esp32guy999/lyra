@@ -27,6 +27,14 @@ interface LidarrApi {
     @GET("api/v1/metadataprofile")
     suspend fun getMetadataProfiles(): List<LidarrProfile>
 
+    // --- Interactive search (parsed releases for one album) + grab ---
+
+    @GET("api/v1/release")
+    suspend fun getReleases(@Query("albumId") albumId: Int): List<LidarrRelease>
+
+    @POST("api/v1/release")
+    suspend fun grabRelease(@Body request: GrabReleaseRequest): Response<Unit>
+
     // --- Album ---
 
     @GET("api/v1/album")

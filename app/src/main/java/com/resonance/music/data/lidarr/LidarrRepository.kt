@@ -43,4 +43,12 @@ class LidarrRepository @Inject constructor(
     suspend fun searchAlbums(ids: List<Int>) {
         api.searchAlbums(SearchAlbumCommand(albumIds = ids))
     }
+
+    /** Interactive search: parsed releases for one album (needs the album in Lidarr). */
+    suspend fun searchAlbum(albumId: Int): List<LidarrRelease> = api.getReleases(albumId)
+
+    /** Grab a specific release → Lidarr downloads + imports it. */
+    suspend fun grab(release: LidarrRelease) {
+        api.grabRelease(GrabReleaseRequest(release.guid.orEmpty(), release.indexerId ?: 0))
+    }
 }

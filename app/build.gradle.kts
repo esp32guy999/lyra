@@ -30,6 +30,10 @@ android {
             "\"${lidarrProps.getProperty("lidarr.url", "http://192.168.4.206:8686/")}\"")
         buildConfigField("String", "LIDARR_KEY",
             "\"${lidarrProps.getProperty("lidarr.key", "")}\"")
+        buildConfigField("String", "PROWLARR_URL",
+            "\"${lidarrProps.getProperty("prowlarr.url", "http://192.168.4.206:9696/")}\"")
+        buildConfigField("String", "PROWLARR_KEY",
+            "\"${lidarrProps.getProperty("prowlarr.key", "")}\"")
     }
 
     // From-source builds (e.g. F-Droid) have no signing material; only wire up a
