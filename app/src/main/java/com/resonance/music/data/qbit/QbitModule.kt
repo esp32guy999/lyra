@@ -53,9 +53,15 @@ object QbitModule {
     @Provides
     @Singleton
     fun provideQbitConfig(): QbitConfig =
-        QbitConfig(BuildConfig.QBIT_URL, BuildConfig.QBIT_USER, BuildConfig.QBIT_PASS)
+        QbitConfig(BuildConfig.QBIT_URL, BuildConfig.QBIT_USER, BuildConfig.QBIT_PASS, BuildConfig.QBIT_SAVE_PATH)
 }
 
-data class QbitConfig(val baseUrl: String, val user: String, val pass: String) {
+data class QbitConfig(
+    val baseUrl: String,
+    val user: String,
+    val pass: String,
+    /** Optional save dir (must be a path visible inside qBit's container). Empty → qBit default. */
+    val savePath: String = ""
+) {
     val isConfigured: Boolean get() = baseUrl.isNotBlank() && user.isNotBlank()
 }

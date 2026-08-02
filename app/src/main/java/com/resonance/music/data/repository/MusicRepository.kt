@@ -96,6 +96,12 @@ class MusicRepository @Inject constructor(
     fun normalizeTitle(s: String): String =
         s.lowercase().replace(Regex("[^a-z0-9]+"), " ").trim()
 
+    /** Kick off a Navidrome library rescan so freshly-imported music shows up. */
+    suspend fun rescanLibrary() {
+        val env = api.startScan().response
+        if (!env.isOk) throw SubsonicException(env.error)
+    }
+
     // --- Playlists ---
 
     suspend fun getPlaylists(): List<PlaylistItem> {

@@ -28,7 +28,7 @@ class QbitRepository @Inject constructor(
     suspend fun addForSelection(downloadUrl: String): PendingTorrent {
         ensureAuth()
         val before = api.info().mapNotNull { it.hash }.toSet()
-        val add = api.add(urls = downloadUrl)
+        val add = api.add(urls = downloadUrl, savepath = config.savePath)
         if (!add.isSuccessful) throw IllegalStateException("qBit add failed (${add.code()})")
 
         var hash: String? = null

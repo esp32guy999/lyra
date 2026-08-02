@@ -43,6 +43,7 @@ interface QbitApi {
     suspend fun add(
         @Field("urls") urls: String,
         @Field("category") category: String = "lyra",
+        @Field("savepath") savepath: String = "",   // empty → qBit default
         @Field("paused") paused: String = "true",
         @Field("stopped") stopped: String = "true"
     ): Response<Unit>

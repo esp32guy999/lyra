@@ -176,6 +176,17 @@ class LidarrViewModel @Inject constructor(
         }
     }
 
+    /** Kick a Navidrome rescan so freshly-imported tracks appear in the library. */
+    fun rescan() {
+        set { it.copy(busy = "Rescanning library…", error = null) }
+        viewModelScope.launch {
+            try {
+                music.rescanLibrary()
+                set { it.copy(busy = "Library rescan started ✓") }
+            } catch (e: Exception) { set { it.copy(busy = null, error = "Rescan failed: ${e.message}") } }
+        }
+    }
+
     /** True if this discography album is already in the Navidrome library. */
     fun isOwned(album: LidarrAlbum): Boolean =
         album.title?.let { music.normalizeTitle(it) in _state.value.owned } ?: false

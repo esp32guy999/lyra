@@ -47,7 +47,13 @@ fun LidarrContent(viewModel: LidarrViewModel = hiltViewModel()) {
         }
 
         Spacer(Modifier.height(8.dp))
-        s.busy?.let { Text(it, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(bottom = 6.dp)) }
+        s.busy?.let {
+            Row(Modifier.fillMaxWidth().padding(bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(it, color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+                TextButton(onClick = { viewModel.rescan() }) { Text("Rescan") }
+            }
+        }
 
         when {
             s.loading -> Box(Modifier.fillMaxWidth().padding(24.dp), Alignment.Center) { CircularProgressIndicator() }

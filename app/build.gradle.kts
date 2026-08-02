@@ -40,6 +40,8 @@ android {
             "\"${lidarrProps.getProperty("qbit.user", "")}\"")
         buildConfigField("String", "QBIT_PASS",
             "\"${lidarrProps.getProperty("qbit.pass", "")}\"")
+        buildConfigField("String", "QBIT_SAVE_PATH",
+            "\"${lidarrProps.getProperty("qbit.save.path", "")}\"")
     }
 
     // From-source builds (e.g. F-Droid) have no signing material; only wire up a

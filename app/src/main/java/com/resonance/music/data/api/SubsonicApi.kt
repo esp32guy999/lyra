@@ -11,6 +11,10 @@ interface SubsonicApi {
     @GET("rest/ping")
     suspend fun ping(): SubsonicRoot
 
+    /** Trigger a Navidrome library rescan (Subsonic/OpenSubsonic). */
+    @GET("rest/startScan")
+    suspend fun startScan(): SubsonicRoot
+
     // --- Browsing ---
 
     @GET("rest/getArtists")
