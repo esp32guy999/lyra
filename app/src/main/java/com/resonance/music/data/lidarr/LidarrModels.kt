@@ -45,13 +45,15 @@ data class AddArtistRequest(
     val qualityProfileId: Int,
     val metadataProfileId: Int,
     val rootFolderPath: String,
-    val monitored: Boolean = true,
+    // Added only to browse the discography — DON'T auto-monitor/grab. The user grabs
+    // specific releases explicitly; anything else pulls the whole discography (bug 2026-08-02).
+    val monitored: Boolean = false,
     val addOptions: AddArtistOptions = AddArtistOptions()
 )
 
 data class AddArtistOptions(
-    val monitor: String = "all",
-    val searchForMissingAlbums: Boolean = true
+    val monitor: String = "none",
+    val searchForMissingAlbums: Boolean = false
 )
 
 // Interactive-search release (Lidarr already parses quality/seeders from the indexer).

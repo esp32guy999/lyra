@@ -132,9 +132,12 @@ class LidarrViewModel @Inject constructor(
 
     private fun doGrab(r: AcqResult) {
         if (r.source == AcqSource.PROWLARR) { grabProwlarr(r); return }
+        val albumId = _state.value.album?.id
         set { it.copy(busy = "Grabbing ${r.title.take(40)}…", error = null) }
         viewModelScope.launch {
             try {
+                // Monitor just THIS album (artist was added unmonitored) so Lidarr imports it.
+                albumId?.let { runCatching { lidarr.monitorAlbums(listOf(it)) } }
                 r.lidarr?.let { lidarr.grab(it) }
                 set { it.copy(busy = "Sent to Lidarr ✓ — downloading + importing.") }
             } catch (e: Exception) { set { it.copy(busy = null, error = "Grab failed: ${e.message}") } }
