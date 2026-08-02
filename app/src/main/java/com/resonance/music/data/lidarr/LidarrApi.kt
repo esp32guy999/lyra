@@ -43,6 +43,14 @@ interface LidarrApi {
     @PUT("api/v1/album/monitor")
     suspend fun monitorAlbums(@Body albumIds: List<Int>): Response<Unit>
 
+    // --- Track files (for REPLACE: delete the owned copy off disk before re-grabbing) ---
+
+    @GET("api/v1/trackfile")
+    suspend fun getTrackFiles(@Query("albumId") albumId: Int): List<LidarrTrackFile>
+
+    @HTTP(method = "DELETE", path = "api/v1/trackfile/bulk", hasBody = true)
+    suspend fun deleteTrackFiles(@Body request: DeleteTrackFilesRequest): Response<Unit>
+
     // --- Command ---
 
     @POST("api/v1/command")
@@ -53,3 +61,11 @@ data class SearchAlbumCommand(
     val name: String = "AlbumSearch",
     val albumIds: List<Int>
 )
+
+data class LidarrTrackFile(
+    val id: Int,
+    val albumId: Int? = null,
+    val path: String? = null
+)
+
+data class DeleteTrackFilesRequest(val trackFileIds: List<Int>)

@@ -65,6 +65,19 @@ fun LidarrContent(viewModel: LidarrViewModel = hiltViewModel()) {
     }
 
     if (s.pending != null) TrackSelectDialog(s, viewModel)
+    if (s.confirmReplace != null) ReplaceConfirmDialog(s, viewModel)
+}
+
+@Composable
+private fun ReplaceConfirmDialog(s: LidarrUiState, vm: LidarrViewModel) {
+    val album = s.album?.title ?: "this album"
+    AlertDialog(
+        onDismissRequest = { vm.cancelReplaceGrab() },
+        title = { Text("Replace owned copy?") },
+        text = { Text("This deletes your current files for \"$album\" off disk (via Lidarr), then downloads the new copy. This can't be undone.") },
+        confirmButton = { TextButton(onClick = { vm.confirmReplaceGrab() }) { Text("Delete & grab") } },
+        dismissButton = { TextButton(onClick = { vm.cancelReplaceGrab() }) { Text("Cancel") } }
+    )
 }
 
 @Composable
@@ -115,13 +128,18 @@ private fun DiscogList(s: LidarrUiState, vm: LidarrViewModel) {
     LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         items(s.albums) { al ->
             val owned = vm.isOwned(al)
+            val armed = vm.isReplaceArmed(al)
             ElevatedCard(Modifier.fillMaxWidth().clickable { vm.openAlbum(al) }) {
                 Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text(al.title ?: "Untitled", style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.weight(1f))
                     Spacer(Modifier.width(8.dp))
-                    if (owned) Badge("OWNED", Color(0xFF2E7D32))
-                    else Badge("MISSING", Color(0xFF8D6E00))
+                    when {
+                        // Owned: tap the badge to arm REPLACE (wipes the old copy on grab).
+                        owned && armed -> Box(Modifier.clickable { vm.toggleReplace(al) }) { Badge("REPLACE", Color(0xFFC62828)) }
+                        owned -> Box(Modifier.clickable { vm.toggleReplace(al) }) { Badge("OWNED", Color(0xFF2E7D32)) }
+                        else -> Badge("MISSING", Color(0xFF8D6E00))
+                    }
                 }
             }
         }

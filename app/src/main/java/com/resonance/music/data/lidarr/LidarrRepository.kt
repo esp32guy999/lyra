@@ -51,4 +51,15 @@ class LidarrRepository @Inject constructor(
     suspend fun grab(release: LidarrRelease) {
         api.grabRelease(GrabReleaseRequest(release.guid.orEmpty(), release.indexerId ?: 0))
     }
+
+    /**
+     * Delete the owned track files for an album off disk (the REPLACE path). Returns how many
+     * files were removed. Lidarr is the delete authority since it manages the music library.
+     */
+    suspend fun deleteAlbumFiles(albumId: Int): Int {
+        val ids = api.getTrackFiles(albumId).map { it.id }
+        if (ids.isEmpty()) return 0
+        api.deleteTrackFiles(DeleteTrackFilesRequest(ids))
+        return ids.size
+    }
 }

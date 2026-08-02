@@ -41,6 +41,8 @@ data class LidarrUiState(
     val artist: LidarrArtist? = null,
     val albums: List<LidarrAlbum> = emptyList(),
     val owned: Set<String> = emptySet(),   // normalized titles already in the library
+    val replaceArmed: Set<Int> = emptySet(), // album ids armed to replace (wipe old copy on grab)
+    val confirmReplace: AcqResult? = null,   // release awaiting replace confirmation
     val album: LidarrAlbum? = null,
     val results: List<AcqResult> = emptyList(),
     val loading: Boolean = false,
@@ -119,6 +121,16 @@ class LidarrViewModel @Inject constructor(
     }
 
     fun grab(r: AcqResult) {
+        // If this album is armed to REPLACE, confirm the (irreversible) delete of the old copy first.
+        val albumId = _state.value.album?.id
+        if (albumId != null && albumId in _state.value.replaceArmed) {
+            set { it.copy(confirmReplace = r) }
+            return
+        }
+        doGrab(r)
+    }
+
+    private fun doGrab(r: AcqResult) {
         if (r.source == AcqSource.PROWLARR) { grabProwlarr(r); return }
         set { it.copy(busy = "Grabbing ${r.title.take(40)}…", error = null) }
         viewModelScope.launch {
@@ -126,6 +138,42 @@ class LidarrViewModel @Inject constructor(
                 r.lidarr?.let { lidarr.grab(it) }
                 set { it.copy(busy = "Sent to Lidarr ✓ — downloading + importing.") }
             } catch (e: Exception) { set { it.copy(busy = null, error = "Grab failed: ${e.message}") } }
+        }
+    }
+
+    /** Tap the OWNED badge to arm/disarm REPLACE for an owned album. */
+    fun toggleReplace(album: LidarrAlbum) {
+        val id = album.id ?: return
+        set { it.copy(replaceArmed = if (id in it.replaceArmed) it.replaceArmed - id else it.replaceArmed + id) }
+    }
+
+    fun isReplaceArmed(album: LidarrAlbum): Boolean =
+        album.id?.let { it in _state.value.replaceArmed } ?: false
+
+    fun cancelReplaceGrab() = set { it.copy(confirmReplace = null) }
+
+    /** Confirmed REPLACE: delete the owned files via Lidarr, then grab the new release. */
+    fun confirmReplaceGrab() {
+        val r = _state.value.confirmReplace ?: return
+        val album = _state.value.album
+        val albumId = album?.id
+        val ownedKey = album?.title?.let { music.normalizeTitle(it) }
+        set { it.copy(confirmReplace = null, busy = "Deleting old copy…", error = null) }
+        viewModelScope.launch {
+            try {
+                val n = albumId?.let { lidarr.deleteAlbumFiles(it) } ?: 0
+                set {
+                    it.copy(
+                        busy = "Removed $n old file(s) — grabbing…",
+                        replaceArmed = it.replaceArmed - (albumId ?: -1),
+                        owned = if (ownedKey != null) it.owned - ownedKey else it.owned
+                    )
+                }
+            } catch (e: Exception) {
+                set { it.copy(busy = null, error = "Delete failed: ${e.message}") }
+                return@launch
+            }
+            doGrab(r)
         }
     }
 
@@ -170,8 +218,8 @@ class LidarrViewModel @Inject constructor(
 
     fun back() = set {
         when (it.stage) {
-            Stage.RESULTS -> it.copy(stage = Stage.DISCOG, results = emptyList(), busy = null, error = null)
-            Stage.DISCOG -> it.copy(stage = Stage.SEARCH, albums = emptyList(), owned = emptySet(), error = null)
+            Stage.RESULTS -> it.copy(stage = Stage.DISCOG, results = emptyList(), busy = null, error = null, confirmReplace = null)
+            Stage.DISCOG -> it.copy(stage = Stage.SEARCH, albums = emptyList(), owned = emptySet(), replaceArmed = emptySet(), error = null)
             Stage.SEARCH -> it
         }
     }
