@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -56,6 +57,33 @@ fun LidarrContent(viewModel: LidarrViewModel = hiltViewModel()) {
             s.stage == Stage.RESULTS -> ResultList(s, viewModel)
         }
     }
+
+    if (s.pending != null) TrackSelectDialog(s, viewModel)
+}
+
+@Composable
+private fun TrackSelectDialog(s: LidarrUiState, vm: LidarrViewModel) {
+    val files = s.pending?.files ?: return
+    AlertDialog(
+        onDismissRequest = { vm.cancelSelection() },
+        title = { Text("Select tracks (${s.selected.size}/${files.size})") },
+        text = {
+            LazyColumn(Modifier.heightIn(max = 400.dp)) {
+                itemsIndexed(files) { i, f ->
+                    Row(
+                        Modifier.fillMaxWidth().clickable { vm.toggleTrack(i) }.padding(vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(checked = i in s.selected, onCheckedChange = { vm.toggleTrack(i) })
+                        Text(f.leaf, style = MaterialTheme.typography.bodySmall, maxLines = 2,
+                            modifier = Modifier.weight(1f))
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = { vm.confirmSelection() }) { Text("Download") } },
+        dismissButton = { TextButton(onClick = { vm.cancelSelection() }) { Text("Cancel") } }
+    )
 }
 
 @Composable

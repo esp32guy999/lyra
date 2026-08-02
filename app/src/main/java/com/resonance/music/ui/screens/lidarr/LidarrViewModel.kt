@@ -9,6 +9,9 @@ import com.resonance.music.data.lidarr.LidarrRelease
 import com.resonance.music.data.lidarr.LidarrRepository
 import com.resonance.music.data.prowlarr.ProwlarrRepository
 import com.resonance.music.data.prowlarr.ProwlarrResult
+import com.resonance.music.data.qbit.PendingTorrent
+import com.resonance.music.data.qbit.QbitConfig
+import com.resonance.music.data.qbit.QbitRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -41,14 +44,19 @@ data class LidarrUiState(
     val loading: Boolean = false,
     val busy: String? = null,          // transient status (e.g. "Grabbing…")
     val error: String? = null,
-    val configured: Boolean = true
+    val configured: Boolean = true,
+    // track-select sheet (Prowlarr torrents only)
+    val pending: PendingTorrent? = null,
+    val selected: Set<Int> = emptySet()
 )
 
 @HiltViewModel
 class LidarrViewModel @Inject constructor(
     private val lidarr: LidarrRepository,
     private val prowlarr: ProwlarrRepository,
-    config: LidarrConfig
+    private val qbit: QbitRepository,
+    config: LidarrConfig,
+    private val qbitConfig: QbitConfig
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(LidarrUiState(configured = config.isConfigured))
@@ -107,15 +115,52 @@ class LidarrViewModel @Inject constructor(
     }
 
     fun grab(r: AcqResult) {
-        if (r.source == AcqSource.PROWLARR) {
-            set { it.copy(error = "Prowlarr/torrent grab + track-select lands in P4.") }; return
-        }
+        if (r.source == AcqSource.PROWLARR) { grabProwlarr(r); return }
         set { it.copy(busy = "Grabbing ${r.title.take(40)}…", error = null) }
         viewModelScope.launch {
             try {
                 r.lidarr?.let { lidarr.grab(it) }
                 set { it.copy(busy = "Sent to Lidarr ✓ — downloading + importing.") }
             } catch (e: Exception) { set { it.copy(busy = null, error = "Grab failed: ${e.message}") } }
+        }
+    }
+
+    /** Prowlarr torrent → add paused in qBit, open the track-select sheet. */
+    private fun grabProwlarr(r: AcqResult) {
+        val url = r.prowlarr?.downloadUrl
+        if (url.isNullOrBlank()) { set { it.copy(error = "No download URL for this release.") }; return }
+        if (!qbitConfig.isConfigured) { set { it.copy(error = "qBittorrent not configured (local.properties).") }; return }
+        set { it.copy(busy = "Adding to qBittorrent…", error = null) }
+        viewModelScope.launch {
+            try {
+                val pt = qbit.addForSelection(url)
+                // default: keep everything (indices 0..n-1)
+                set { it.copy(busy = null, pending = pt, selected = pt.files.indices.toSet()) }
+            } catch (e: Exception) { set { it.copy(busy = null, error = "qBit add failed: ${e.message}") } }
+        }
+    }
+
+    fun toggleTrack(i: Int) = set {
+        it.copy(selected = if (i in it.selected) it.selected - i else it.selected + i)
+    }
+
+    fun cancelSelection() {
+        set { it.copy(pending = null, selected = emptySet()) }
+    }
+
+    /** Apply the track selection and start the torrent. */
+    fun confirmSelection() {
+        val pt = _state.value.pending ?: return
+        val keep = _state.value.selected
+        if (keep.isEmpty()) { set { it.copy(error = "Select at least one track.") }; return }
+        set { it.copy(busy = "Starting ${keep.size}/${pt.files.size} tracks…", pending = null) }
+        viewModelScope.launch {
+            try {
+                qbit.startWithSelection(pt.hash, pt.files.size, keep)
+                set { it.copy(busy = "Downloading ${keep.size} track(s) ✓", selected = emptySet()) }
+            } catch (e: Exception) {
+                set { it.copy(busy = null, pending = pt, error = "Start failed: ${e.message}") }
+            }
         }
     }
 

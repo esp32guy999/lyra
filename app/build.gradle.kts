@@ -34,6 +34,12 @@ android {
             "\"${lidarrProps.getProperty("prowlarr.url", "http://192.168.4.206:9696/")}\"")
         buildConfigField("String", "PROWLARR_KEY",
             "\"${lidarrProps.getProperty("prowlarr.key", "")}\"")
+        buildConfigField("String", "QBIT_URL",
+            "\"${lidarrProps.getProperty("qbit.url", "http://192.168.4.206:8090/")}\"")
+        buildConfigField("String", "QBIT_USER",
+            "\"${lidarrProps.getProperty("qbit.user", "")}\"")
+        buildConfigField("String", "QBIT_PASS",
+            "\"${lidarrProps.getProperty("qbit.pass", "")}\"")
     }
 
     // From-source builds (e.g. F-Droid) have no signing material; only wire up a
