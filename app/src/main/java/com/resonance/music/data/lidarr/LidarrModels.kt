@@ -13,7 +13,19 @@ data class LidarrAlbum(
     val title: String? = null,
     val monitored: Boolean? = null,
     val artistId: Int? = null,
-    val foreignAlbumId: String? = null
+    val foreignAlbumId: String? = null,
+    val images: List<LidarrImage>? = null
+) {
+    /** Cover art URL for the discography row (prefer the absolute remoteUrl). */
+    val coverUrl: String?
+        get() = (images?.firstOrNull { it.coverType == "cover" } ?: images?.firstOrNull())
+            ?.let { it.remoteUrl ?: it.url }
+}
+
+data class LidarrImage(
+    val coverType: String? = null,
+    val url: String? = null,
+    val remoteUrl: String? = null
 )
 
 data class LidarrRootFolder(

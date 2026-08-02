@@ -1,7 +1,9 @@
 package com.resonance.music.ui.screens.lidarr
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -9,15 +11,19 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Album
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 
 /** Discovery + acquisition drill-down (search → discography → merged results). */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -131,6 +137,8 @@ private fun DiscogList(s: LidarrUiState, vm: LidarrViewModel) {
             val armed = vm.isReplaceArmed(al)
             ElevatedCard(Modifier.fillMaxWidth().clickable { vm.openAlbum(al) }) {
                 Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    AlbumThumb(al.coverUrl, al.title)
+                    Spacer(Modifier.width(12.dp))
                     Text(al.title ?: "Untitled", style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.weight(1f))
                     Spacer(Modifier.width(8.dp))
@@ -177,6 +185,23 @@ private fun Badge(text: String, color: Color) {
     Surface(color = color, shape = MaterialTheme.shapes.small) {
         Text(text, color = Color.White, style = MaterialTheme.typography.labelSmall,
             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
+    }
+}
+
+@Composable
+private fun AlbumThumb(url: String?, title: String?) {
+    Box(
+        Modifier.size(48.dp).clip(RoundedCornerShape(4.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+        contentAlignment = Alignment.Center
+    ) {
+        if (url != null) {
+            AsyncImage(model = url, contentDescription = title,
+                modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        } else {
+            Icon(Icons.Default.Album, contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
 
