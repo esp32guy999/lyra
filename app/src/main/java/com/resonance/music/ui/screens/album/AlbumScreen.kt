@@ -32,9 +32,25 @@ fun AlbumScreen(
     viewModel: AlbumViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showDeleteConfirm by remember { mutableStateOf(false) }
 
     LaunchedEffect(albumId) {
         viewModel.loadAlbum(albumId)
+    }
+
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text("Delete album?") },
+            text = { Text("This permanently deletes \"${uiState.albumName}\" from your library (files removed off disk via Lidarr). This can't be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = { showDeleteConfirm = false; viewModel.deleteAlbum(onDeleted = onBackClick) },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) { Text("Delete") }
+            },
+            dismissButton = { TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel") } }
+        )
     }
 
     Scaffold(
@@ -69,6 +85,11 @@ fun AlbumScreen(
                                 text = { Text("Add to queue") },
                                 onClick = { showAlbumMenu = false; viewModel.addAllToQueue() },
                                 leadingIcon = { Icon(Icons.Default.PlaylistAdd, contentDescription = null) }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Delete from library", color = MaterialTheme.colorScheme.error) },
+                                onClick = { showAlbumMenu = false; showDeleteConfirm = true },
+                                leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) }
                             )
                         }
                     }

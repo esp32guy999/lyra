@@ -3,6 +3,7 @@ package com.resonance.music.ui.screens.album
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.resonance.music.data.api.models.SongItem
+import com.resonance.music.data.lidarr.LidarrRepository
 import com.resonance.music.data.repository.MusicRepository
 import com.resonance.music.playback.PlaybackManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,12 +23,14 @@ data class AlbumUiState(
     val coverArtUrl: String? = null,
     val songs: List<SongItem> = emptyList(),
     val isFavorite: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val deleting: Boolean = false
 )
 
 @HiltViewModel
 class AlbumViewModel @Inject constructor(
     private val musicRepository: MusicRepository,
+    private val lidarrRepository: LidarrRepository,
     private val playbackManager: PlaybackManager
 ) : ViewModel() {
 
@@ -93,4 +96,25 @@ class AlbumViewModel @Inject constructor(
     fun addToQueue(song: SongItem) = playbackManager.addToQueue(listOf(song))
     fun playAllNext() = _uiState.value.songs.takeIf { it.isNotEmpty() }?.let { playbackManager.playNext(it) }
     fun addAllToQueue() = _uiState.value.songs.takeIf { it.isNotEmpty() }?.let { playbackManager.addToQueue(it) }
+
+    /**
+     * Delete this album from the library (curation): Lidarr removes the files off disk, then a
+     * Navidrome rescan drops it from the library. Calls [onDeleted] on success (navigate away).
+     */
+    fun deleteAlbum(onDeleted: () -> Unit) {
+        val st = _uiState.value
+        _uiState.value = st.copy(deleting = true, error = null)
+        viewModelScope.launch {
+            try {
+                val album = lidarrRepository.findAlbum(st.artistName, st.albumName)
+                    ?: throw IllegalStateException("Not managed by Lidarr — can't delete from here.")
+                lidarrRepository.deleteAlbumFiles(album.id ?: error("no album id"))
+                runCatching { musicRepository.rescanLibrary() }
+                _uiState.value = _uiState.value.copy(deleting = false)
+                onDeleted()
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(deleting = false, error = e.message ?: "Delete failed")
+            }
+        }
+    }
 }

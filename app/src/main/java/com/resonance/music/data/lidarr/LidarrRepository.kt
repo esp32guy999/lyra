@@ -52,6 +52,19 @@ class LidarrRepository @Inject constructor(
         api.grabRelease(GrabReleaseRequest(release.guid.orEmpty(), release.indexerId ?: 0))
     }
 
+    /** Resolve a library album (by artist + title) to its Lidarr album, or null if not managed. */
+    suspend fun findAlbum(artistName: String, albumTitle: String): LidarrAlbum? {
+        val wantArtist = normalize(artistName)
+        val artist = api.getArtists().firstOrNull { normalize(it.artistName.orEmpty()) == wantArtist }
+            ?: return null
+        val wantTitle = normalize(albumTitle)
+        return api.getAlbums(artist.id ?: return null)
+            .firstOrNull { normalize(it.title.orEmpty()) == wantTitle }
+    }
+
+    private fun normalize(s: String): String =
+        s.lowercase().replace(Regex("[^a-z0-9]+"), " ").trim()
+
     /**
      * Delete the owned track files for an album off disk (the REPLACE path). Returns how many
      * files were removed. Lidarr is the delete authority since it manages the music library.
