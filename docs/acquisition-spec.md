@@ -44,12 +44,18 @@ arr stack + qBittorrent do the heavy lifting. Lives in the **Manage** tab.
 - Navidrome: reuse the app's existing Subsonic login.
 
 ## Build phases
-- **P1 — data layer:** Lidarr discography + release-search + grab; Prowlarr raw search;
-  qBit add + filePrio; DI/config. (compile-verified)
-- **P2 — ownership diff:** Navidrome owned-set + album OWNED/MISSING.
-- **P3 — UI:** discography tree (owned/missing badges) → album → merged results (quality +
-  seeders + source badge) → grab; torrent-only track-select expander.
-- **P4 — track import:** place & tag loose tracks into /music + Navidrome rescan.
+- **P1 — data layer:** ✅ Lidarr discography + release-search + grab; Prowlarr raw search;
+  DI/config. (compile-verified, committed)
+- **P3 — UI:** ✅ stage drill-down (SEARCH→DISCOG→RESULTS): artist search → discography →
+  merged Lidarr+Prowlarr results (quality + seeders + source badge) → grab. Material 3.
+- **P4 — track-select (torrents):** ✅ Prowlarr grab → qBit add-paused → locate hash →
+  list files → track-select dialog → filePrio (0 skip / 1 want) → start. Only chosen
+  tracks download. (committed)
+- **P2 — ownership diff:** ⬜ Navidrome owned-set → album/track OWNED vs MISSING badges in
+  the discography (dedup what you already have). Not yet built.
+- **P5 — library placement:** ⬜ Prowlarr/qBit downloads land in qBit's dir, not the music
+  library. Need import: point qBit save-path at a Lidarr-watched folder (or manual move +
+  tag) + Navidrome rescan. Lidarr grabs already auto-import. Not yet built.
 
 ## Caveats (designed-around)
 - Lidarr search needs the album added first; Prowlarr raw doesn't → offer both paths.
